@@ -1,0 +1,47 @@
+{
+  "name": "controle-financeiro-bruno",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Controle Financeiro – Electron + React + Vite + Tailwind",
+  "main": "main.js",
+  "author": "Bruno + ChatGPT",
+  "license": "MIT",
+  "build": {
+    "appId": "com.seuapp.financeiro",
+    "productName": "ControleFinanceiro",
+    "files": [
+      "dist/**/*",
+      "main.js"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "vite-build": "vite build",
+    "electron": "electron .",
+    "dist": "npm run vite-build && electron-builder"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.12",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.12.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.21",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.5.4",
+    "vite": "^7.1.3"
+  }
+}

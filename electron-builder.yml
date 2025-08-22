@@ -1,0 +1,16 @@
+appId: br.com.bruno.controlefinanceiro
+productName: Controle Financeiro
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/**
+asar: true
+win:
+  target:
+    - nsis
+  artifactName: "ControleFinanceiro-Setup-${version}.exe"
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
