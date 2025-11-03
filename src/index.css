@@ -3,3 +3,19 @@
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
+
+/* Barra de rolagem adaptada para dark mode usando Tailwind + CSS custom */
+@layer utilities {
+  .scrollbar-dark {
+    scrollbar-color: #334155 #10151b;
+  }
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 8px;
+    background: #10151b;
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 8px;
+    border: 2px solid #10151b;
+  }
+}

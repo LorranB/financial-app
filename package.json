@@ -1,6 +1,6 @@
 {
   "name": "controle-financeiro-bruno",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Controle Financeiro – Electron + React + Vite + Tailwind",
   "main": "main.js",
@@ -15,7 +15,8 @@
     ],
     "win": {
       "target": "nsis"
-    }
+    },
+    "icon": "assets/icon.ico"
   },
   "scripts": {
     "dev": "vite",
@@ -28,12 +29,14 @@
   "dependencies": {
     "framer-motion": "^12.23.12",
     "react": "^18.2.0",
+    "react-date-range": "^2.0.1",
     "react-dom": "^18.2.0",
     "recharts": "^2.12.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
+    "@types/react-date-range": "^1.4.10",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.21",

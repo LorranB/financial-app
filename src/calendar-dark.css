@@ -1,0 +1,52 @@
+.calendar-dark .rdrMonthPicker, .calendar-dark .rdrYearPicker {
+  background: #1a2230 !important;
+  color: #38bdf8 !important;
+}
+.calendar-dark .rdrNextButton, .calendar-dark .rdrPprevButton, .calendar-dark .rdrButton {
+  background: #334155 !important;
+  color: #38bdf8 !important;
+  border-radius: 8px !important;
+  border: none !important;
+}
+.calendar-dark .rdrNextButton svg, .calendar-dark .rdrPprevButton svg {
+  stroke: #38bdf8 !important;
+}
+.calendar-dark .rdrMonthAndYearPickers select {
+  background: #1a2230 !important;
+  color: #38bdf8 !important;
+}
+.rdrCalendarWrapper {
+  background: #1a2230 !important;
+  color: #cbd5e1 !important;
+  border-radius: 16px !important;
+}
+.rdrDateDisplayWrapper, .rdrMonthAndYearPickers, .rdrMonthPicker, .rdrYearPicker {
+  background: #1a2230 !important;
+  color: #38bdf8 !important;
+}
+.rdrDayNumber span {
+  color: #cbd5e1 !important;
+}
+.rdrDayToday .rdrDayNumber span {
+  color: #38bdf8 !important;
+}
+.rdrDayPassive {
+  background: #10151b !important;
+  color: #64748b !important;
+}
+.rdrDaySelected {
+  background: #38bdf8 !important;
+  color: #fff !important;
+}
+.rdrDayStartPreview, .rdrDayEndPreview, .rdrDayInPreview {
+  box-shadow: 0 0 0 2px #38bdf8 inset !important;
+  background: transparent !important;
+  color: #cbd5e1 !important;
+}
+.rdrMonthAndYearPickers select {
+  background: #1a2230 !important;
+  color: #38bdf8 !important;
+}
+.rdrDayHovered {
+  background: #334155 !important;
+}
