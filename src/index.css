@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+/* Respeita notch/áreas seguras em iOS/Android quando rodando via Capacitor */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer utilities {
+  .scrollbar-dark {
+    scrollbar-color: #334155 #10151b;
+  }
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 8px;
+    background: #10151b;
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 8px;
+    border: 2px solid #10151b;
+  }
+}

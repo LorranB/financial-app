@@ -1,0 +1,18 @@
+appId: com.croomastudio.simplefinance
+productName: SimpleFinance
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/**
+  - assets/**
+asar: true
+win:
+  icon: assets/icone.ico
+  target:
+    - nsis
+  artifactName: "SimpleFinance-Setup-${version}.exe"
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
