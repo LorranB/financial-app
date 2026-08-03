@@ -1,0 +1,67 @@
+name: Build iOS (validação, sem assinatura)
+
+# Roda automaticamente a cada push na main, e também pode ser disparado manualmente
+# na aba "Actions" do GitHub (botão "Run workflow").
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    # macOS é obrigatório pra qualquer build iOS — só existe nativamente na nuvem
+    # (não roda em runner Windows/Linux). O GitHub oferece isso de graça até um
+    # limite de minutos por mês.
+    runs-on: macos-14
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Build do app web (React/Vite)
+        run: npm run build
+
+      - name: Adicionar a plataforma iOS (só se ainda não existir no repositório)
+        run: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+
+      - name: Sincronizar o app web com o projeto iOS
+        run: npx cap sync ios
+
+      - name: Instalar CocoaPods (dependências nativas do iOS)
+        working-directory: ios/App
+        run: pod install
+
+      - name: Compilar para o Simulador iOS (sem assinatura de código)
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Guardar o resultado do build como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ios-simulador
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/*.app
+          if-no-files-found: warn
