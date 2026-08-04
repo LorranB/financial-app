@@ -7,6 +7,9 @@ import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Ce
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { AdMob, BannerAdPosition, BannerAdSize, AdmobConsentStatus } from '@capacitor-community/admob';
+import { AD_IDS, USE_TEST_ADS, deveMostrarIntersticial } from './ads';
+import { temVersaoSemAnuncios, comprarSemAnuncios, restaurarCompras } from './purchases';
 import { Lang, detectLang, saveLang, translations, interpolate, LANG_LABELS, LANG_FLAGS, SUPPORTED_LANGS, catLabel } from './i18n';
 import { Currency, detectCurrency, saveCurrency, formatMoney, formatMoneyInput, parseMoneyInput, CURRENCY_INFO, SUPPORTED_CURRENCIES } from './currency';
 // Icons (inline SVG to evitar libs externas)
@@ -314,6 +317,92 @@ export default function App() {
       }
     })();
   }, [darkMode]);
+
+  // Anúncios (AdMob) — só roda em Android/iOS nativo, só pra quem NÃO comprou a
+  // versão sem anúncios, e nunca trava o app se falhar (sem internet, plugin não
+  // configurado, conta AdMob/RevenueCat não criada ainda etc).
+  const [bannerAtivo, setBannerAtivo] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [verificandoCompra, setVerificandoCompra] = useState(true);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) { setVerificandoCompra(false); return; }
+    (async () => {
+      const pro = await temVersaoSemAnuncios();
+      setIsPro(pro);
+      setVerificandoCompra(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || verificandoCompra || isPro) return;
+    (async () => {
+      try {
+        await AdMob.initialize({ initializeForTesting: USE_TEST_ADS });
+
+        // Fluxo de consentimento (GDPR/UMP) — exigido pelo Google antes de mostrar
+        // qualquer anúncio, mesmo fora da Europa (o SDK decide sozinho se precisa
+        // mostrar o formulário, conforme a região do usuário).
+        const consentInfo = await AdMob.requestConsentInfo();
+        if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
+          await AdMob.showConsentForm();
+        }
+
+        await AdMob.showBanner({
+          adId: AD_IDS.banner,
+          adSize: BannerAdSize.ADAPTIVE_BANNER,
+          position: BannerAdPosition.BOTTOM_CENTER,
+          margin: 0,
+        });
+        setBannerAtivo(true);
+
+        // Intersticial (tela cheia) só a cada N aberturas do app — ver src/ads.ts
+        if (deveMostrarIntersticial()) {
+          await AdMob.prepareInterstitial({ adId: AD_IDS.interstitial });
+          await AdMob.showInterstitial();
+        }
+      } catch (e) {
+        console.warn('AdMob não pôde ser inicializado (app continua normal, sem anúncio):', e);
+      }
+    })();
+  }, [verificandoCompra, isPro]);
+
+  // Se a pessoa comprar a versão sem anúncios enquanto o banner já está na tela,
+  // remove ele na hora (sem precisar reabrir o app)
+  useEffect(() => {
+    if (isPro && bannerAtivo) {
+      AdMob.removeBanner().catch(() => {});
+      setBannerAtivo(false);
+    }
+  }, [isPro, bannerAtivo]);
+
+  const [comprandoPro, setComprandoPro] = useState(false);
+  async function handleComprarSemAnuncios() {
+    setComprandoPro(true);
+    const resultado = await comprarSemAnuncios();
+    setComprandoPro(false);
+    if (resultado.sucesso) {
+      setIsPro(true);
+      setMenuOpen(false);
+      setModal({ type: 'error', message: t('pro.compraConcluida') });
+    } else if (resultado.mensagem) {
+      setModal({ type: 'error', message: resultado.mensagem });
+    }
+    // se resultado.mensagem for undefined e sucesso for false, a pessoa só cancelou a compra — não precisa de aviso nenhum
+  }
+
+  async function handleRestaurarCompra() {
+    setComprandoPro(true);
+    const restaurado = await restaurarCompras();
+    setComprandoPro(false);
+    setMenuOpen(false);
+    if (restaurado) {
+      setIsPro(true);
+      setModal({ type: 'error', message: t('pro.compraConcluida') });
+    } else {
+      setModal({ type: 'error', message: t('pro.nadaParaRestaurar') });
+    }
+  }
 
   // ---- Load/Save ----
   useEffect(()=>{ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) setEntries(JSON.parse(raw)); }catch{} },[]);
@@ -947,6 +1036,26 @@ export default function App() {
                       <button onClick={exportarJSON} className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}><IconUpload/> {t('menu.exportarJson')}</button>
                       <button onClick={exportarCSV} className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}><IconUpload/> {t('menu.exportarCsv')}</button>
                       <hr className="my-2"/>
+                      {Capacitor.isNativePlatform() && (
+                        <>
+                          <hr className="my-2"/>
+                          {isPro ? (
+                            <div className={`px-3 py-2 text-sm flex items-center gap-2 ${darkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                              💙 {t('pro.ativo')}
+                            </div>
+                          ) : (
+                            <>
+                              <button disabled={comprandoPro} onClick={handleComprarSemAnuncios} className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'} disabled:opacity-50`}>
+                                💙 {t('menu.removerAnuncios')}
+                              </button>
+                              <button disabled={comprandoPro} onClick={handleRestaurarCompra} className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${darkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'} disabled:opacity-50`}>
+                                {t('menu.restaurarCompra')}
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                      <hr className="my-2"/>
                       <button onClick={limparTudo} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-50 text-rose-700"><IconTrash/> {t('menu.limparTudo')}</button>
                     </motion.div>
                   )}
@@ -1434,7 +1543,7 @@ export default function App() {
       e.target.value = ''; // permite selecionar o mesmo arquivo de novo depois
     }}
   />
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-4" style={bannerAtivo ? { paddingBottom: 80 } : undefined}>
         {/* Seletor de período e totais */}
         {pagina === 'lancamentos' && <SeletorPeriodo/>}
         {/* Div centralizada para filtros e busca */}
@@ -1474,7 +1583,8 @@ export default function App() {
       <motion.button
         whileTap={{ scale: 0.85, rotate: -10 }}
         onClick={()=>setShowModal(true)}
-        className="fixed bottom-5 right-5 w-14 h-14 rounded-full shadow-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center"
+        className="fixed right-5 w-14 h-14 rounded-full shadow-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center"
+        style={{ bottom: bannerAtivo ? 90 : 20 }}
       >
         <IconPlus/>
       </motion.button>
@@ -1629,7 +1739,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Rodapé leve */}
-      <footer className="text-center text-xs text-slate-400 py-4">Simple Finance • {t('footer.dados')} • CROOMA Design Studio</footer>
+      <footer className="text-center text-xs text-slate-400 py-4" style={bannerAtivo ? { paddingBottom: 60 } : undefined}>Simple Finance • {t('footer.dados')} • CROOMA Design Studio</footer>
     </div>
   );
 }

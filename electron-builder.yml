@@ -13,6 +13,6 @@ win:
     - nsis
   artifactName: "SimpleFinance-Setup-${version}.exe"
 nsis:
-  oneClick: true
+  oneClick: false
   perMachine: false
-  allowToChangeInstallationDirectory: false
+  allowToChangeInstallationDirectory: true

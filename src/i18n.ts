@@ -159,6 +159,11 @@ export const translations: Record<Lang, Dict> = {
 
     'lang.idioma': 'Idioma',
     'menu.moeda': 'Moeda',
+    'menu.removerAnuncios': 'Remover anúncios',
+    'menu.restaurarCompra': 'Restaurar compra',
+    'pro.ativo': 'Sem anúncios ativado',
+    'pro.compraConcluida': 'Prontinho! Os anúncios foram removidos. Obrigado por apoiar o app 💙',
+    'pro.nadaParaRestaurar': 'Não encontramos nenhuma compra anterior pra restaurar nessa conta.',
     'footer.dados': 'Dados salvos localmente no aparelho. Use o menu (≡) para importar/exportar.',
 
     'ganho.salario': 'Salário',
@@ -272,6 +277,11 @@ export const translations: Record<Lang, Dict> = {
 
     'lang.idioma': 'Language',
     'menu.moeda': 'Currency',
+    'menu.removerAnuncios': 'Remove ads',
+    'menu.restaurarCompra': 'Restore purchase',
+    'pro.ativo': 'Ad-free enabled',
+    'pro.compraConcluida': "All set! Ads have been removed. Thanks for supporting the app 💙",
+    'pro.nadaParaRestaurar': "We couldn't find any previous purchase to restore on this account.",
     'footer.dados': 'Data saved locally on this device. Use the menu (≡) to import/export.',
 
     'ganho.salario': 'Salary',
@@ -385,6 +395,11 @@ export const translations: Record<Lang, Dict> = {
 
     'lang.idioma': 'Idioma',
     'menu.moeda': 'Moneda',
+    'menu.removerAnuncios': 'Quitar anuncios',
+    'menu.restaurarCompra': 'Restaurar compra',
+    'pro.ativo': 'Sin anuncios activado',
+    'pro.compraConcluida': 'Listo! Se quitaron los anuncios. Gracias por apoyar la app 💙',
+    'pro.nadaParaRestaurar': 'No encontramos ninguna compra anterior para restaurar en esta cuenta.',
     'footer.dados': 'Datos guardados localmente en el dispositivo. Usá el menú (≡) para importar/exportar.',
 
     'ganho.salario': 'Salario',

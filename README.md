@@ -10,6 +10,10 @@ Windows • Android • iOS — feito com React + TypeScript, empacotado com Ele
 [![Stack](https://img.shields.io/badge/stack-React%20%7C%20TypeScript%20%7C%20Vite-61DAFB)](#-stack-técnica)
 [![Plataformas](https://img.shields.io/badge/plataformas-Windows%20%7C%20Android%20%7C%20iOS-informational)](#-multiplataforma-de-verdade)
 
+**🔗 [Testar a demo ao vivo, direto no navegador](https://lorranb.github.io/financial-app/)**
+*(mesma aplicação usada no Windows/Android/iOS — sem instalar nada, seus dados
+ficam só no seu navegador)*
+
 </div>
 
 ---
@@ -113,7 +117,11 @@ npm run cap:open:android  # abre o Android Studio
 <details>
 <summary><b>Build iOS</b></summary>
 
-Requer um Mac com Xcode.
+Requer um Mac com Xcode — **ou** GitHub Actions com runner macOS (já configurado
+em `.github/workflows/ios-build.yml`, roda automaticamente a cada push). Veja
+`.github/workflows/README-ios-ci.md` para o que já funciona e os próximos passos
+pra instalar num iPhone de verdade (precisa de conta Apple Developer Program).
+
 ```bash
 npm run cap:add:ios
 npm run cap:sync

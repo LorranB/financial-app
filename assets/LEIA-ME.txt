@@ -1,1 +1,0 @@
-Coloque aqui o icon.ico (Windows) e as imagens-base para gerar ícones/splash do Capacitor.

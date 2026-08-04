@@ -6,6 +6,11 @@ release
 .DS_Store
 *.tsbuildinfo
 
+# NUNCA versionar chaves de assinatura nem senhas
+*.jks
+*.keystore
+keystore.properties
+
 # IMPORTANTE: as pastas android/ e ios/ (geradas por "npx cap add android/ios")
 # NÃO devem ser ignoradas — depois que você customizar permissões, ícones,
 # splash screen e configs de assinatura, elas passam a ser parte do projeto

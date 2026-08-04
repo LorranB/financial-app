@@ -1,0 +1,57 @@
+name: Publicar demo web (GitHub Pages)
+
+# Publica automaticamente a cada push na main uma versão do app rodando no navegador,
+# num link público (formato https://<seu-usuario>.github.io/<nome-do-repo>/).
+# É a mesma aplicação React usada no Electron/Capacitor — só que aberta direto no
+# navegador, sem precisar instalar nada. Cada visitante tem seus próprios dados
+# salvos localmente no navegador dele (não é compartilhado entre visitantes).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Build do app web
+        run: npm run build
+
+      - name: Preparar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar o resultado do build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
