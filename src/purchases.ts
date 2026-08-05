@@ -35,7 +35,13 @@ export async function temVersaoSemAnuncios(): Promise<boolean> {
   try {
     await inicializarCompras();
     const info = await Purchases.getCustomerInfo();
-    return !!info.customerInfo.entitlements.active[ENTITLEMENT_SEM_ANUNCIOS];
+    if (info.customerInfo.entitlements.active[ENTITLEMENT_SEM_ANUNCIOS]) return true;
+
+    // Instalação nova gera um ID anônimo novo no RevenueCat, que ainda não sabe da
+    // compra — restorePurchases() consulta a conta Google Play de verdade (sem
+    // mostrar nenhuma tela pro usuário) e vincula a compra a esse ID, se existir.
+    const restaurado = await Purchases.restorePurchases();
+    return !!restaurado.customerInfo.entitlements.active[ENTITLEMENT_SEM_ANUNCIOS];
   } catch {
     return false;
   }
