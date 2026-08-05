@@ -6,6 +6,8 @@ import 'react-date-range/dist/theme/default.css';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { AdMob, BannerAdPosition, BannerAdSize, AdmobConsentStatus } from '@capacitor-community/admob';
 import { AD_IDS, TESTING_DEVICE_IDS, deveMostrarIntersticial } from './ads';
@@ -59,7 +61,7 @@ const IconMoon = (props:any) => (
 // ---- Types ----
 // Também inclui 'investimento' mas não entra no saldo do caixa por padrão
  type Tipo = 'despesa' | 'ganho' | 'investimento';
- type Overrides = Record<string, { nome?: string; valor?: number; categoria?: string; observacoes?: string }>;
+ type Overrides = Record<string, { nome?: string; valor?: number; categoria?: string; observacoes?: string; data?: string }>;
  type Entry = {
   id: string;
   tipo: Tipo;
@@ -184,6 +186,9 @@ export default function App() {
   const [categoria, setCategoria] = useState('');
   const [subcategoria, setSubcategoria] = useState('');
   const [numParcelas, setNumParcelas] = useState(12);
+  // Só usado ao criar uma Parcelada: se true, o valor digitado é o total da compra
+  // (dividido pelo número de parcelas); se false, é o valor de cada parcela já (repetido).
+  const [valorEhTotal, setValorEhTotal] = useState(false);
   const [observacoes, setObservacoes] = useState('');
 
   // Menus/inputs escondidos
@@ -451,7 +456,7 @@ export default function App() {
                 id: `${e.id}::${iso}`,
                 baseId: e.id,
                 ocorrenciaData: iso,
-                data: iso,
+                data: ov?.data ?? iso,
                 nome: ov?.nome ?? e.nome,
                 valor: ov?.valor ?? e.valor,
                 categoria: ov?.categoria ?? e.categoria,
@@ -476,7 +481,7 @@ export default function App() {
                 id: `${e.id}::${iso}`,
                 baseId: e.id,
                 ocorrenciaData: iso,
-                data: iso,
+                data: ov?.data ?? iso,
                 parcelaIndex: i + 1,
                 totalParcelas: total,
                 nome: ov?.nome ?? e.nome, // sufixo "i/total" é só de EXIBIÇÃO — ver nomeExibido()
@@ -597,7 +602,7 @@ export default function App() {
   }
 
   // ---- Ações ----
-  function resetForm(){ setNome(''); setValor(''); setCategoria(''); setSubcategoria(''); setObservacoes(''); setTipo('despesa'); setData(toISODateLocal(new Date())); setNumParcelas(12); }
+  function resetForm(){ setNome(''); setValor(''); setCategoria(''); setSubcategoria(''); setObservacoes(''); setTipo('despesa'); setData(toISODateLocal(new Date())); setNumParcelas(12); setValorEhTotal(false); }
 
   // Permitir valor zero na adição também
   function addEntry(){
@@ -615,7 +620,10 @@ export default function App() {
     setModal({ type: 'error', message: t('form.valorInvalido') });
     return;
   }
-  const novo: Entry = { id: uid(), tipo, nome: nome.trim(), valor: v, data, categoria: categoria.trim()||undefined, subcategoria: subcategoria.trim()||undefined, observacoes: observacoes.trim()||undefined, criadoEm: Date.now(), numParcelas: subcategoria==='Parcelada' ? numParcelas : undefined };
+  // Se marcou "valor total da compra" numa Parcelada, guarda o valor JÁ dividido —
+  // internamente cada parcela sempre representa o valor individual dela.
+  const valorPorParcela = (subcategoria === 'Parcelada' && valorEhTotal && numParcelas > 0) ? v / numParcelas : v;
+  const novo: Entry = { id: uid(), tipo, nome: nome.trim(), valor: valorPorParcela, data, categoria: categoria.trim()||undefined, subcategoria: subcategoria.trim()||undefined, observacoes: observacoes.trim()||undefined, criadoEm: Date.now(), numParcelas: subcategoria==='Parcelada' ? numParcelas : undefined };
   setEntries(prev=> [novo, ...prev]);
   setShowModal(false); resetForm();
 }
@@ -673,6 +681,7 @@ export default function App() {
       valor: pendingEditData.valor,
       categoria: pendingEditData.categoria?.trim() || undefined,
       observacoes: pendingEditData.observacoes?.trim() || undefined,
+      data: pendingEditData.data,
     };
 
     setEntries(prev => {
@@ -781,12 +790,34 @@ export default function App() {
   };
 
   // ---- Exportar/Importar ----
+  // No navegador/Electron, o truque de <a download> + blob funciona normalmente. Já no
+  // WebView nativo do Android/iOS esse truque não dispara nada — precisa escrever o
+  // arquivo de verdade (Filesystem) e abrir a folha de compartilhamento nativa (Share)
+  // pra pessoa escolher onde salvar (Arquivos, Drive, WhatsApp etc.).
+  async function salvarArquivo(nomeArquivo: string, conteudo: string, mimeType: string) {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const resultado = await Filesystem.writeFile({
+          path: nomeArquivo,
+          data: conteudo,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        await Share.share({ url: resultado.uri, dialogTitle: nomeArquivo });
+      } catch {
+        setModal({ type: 'error', message: t('menu.erroExportar') });
+      }
+      return;
+    }
+    const blob = new Blob([conteudo], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = nomeArquivo; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // Exporta TUDO (inclusive estrutura de recorrência) — é o formato de backup completo
   function exportarJSON(){
-    const blob = new Blob([JSON.stringify(entries, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download='simple-finance.json'; a.click();
-    URL.revokeObjectURL(url);
+    salvarArquivo('simple-finance.json', JSON.stringify(entries, null, 2), 'application/json');
   }
 
   // Escapa um campo pro padrão CSV: entre aspas se contiver ; " ou quebra de linha, dobrando aspas internas
@@ -819,10 +850,7 @@ export default function App() {
     // o que corrompia o arquivo inteiro numa única linha.
     const csv = [header, ...linhas].join('\r\n');
     // BOM (\uFEFF) no início: sem isso o Excel abre acentuação (ç, ã, é...) corrompida
-    const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download='simple-finance.csv'; a.click();
-    URL.revokeObjectURL(url);
+    salvarArquivo('simple-finance.csv', '\uFEFF' + csv, 'text/csv;charset=utf-8;');
   }
 
   // Parser de CSV completo: processa o texto inteiro de uma vez (não linha por linha),
@@ -1071,7 +1099,7 @@ export default function App() {
           </div>
         </div>
         {/* nav móvel */}
-        <div className="md:hidden bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
+        <div className={`md:hidden text-white bg-gradient-to-r ${darkMode ? 'from-cyan-700 to-blue-900' : 'from-cyan-500 to-blue-600'}`}>
           <div className="max-w-6xl mx-auto px-4 py-2 flex gap-2">
             <button onClick={()=>setPagina('lancamentos')} className={`px-3 py-2 rounded-xl ${pagina==='lancamentos'?'bg-white/20':''}`}>{t('nav.lancamentos')}</button>
             <button onClick={()=>setPagina('resumo')} className={`px-3 py-2 rounded-xl ${pagina==='resumo'?'bg-white/20':''}`}>{t('nav.resumo')}</button>
@@ -1704,6 +1732,20 @@ export default function App() {
                             <option key={n} value={n}>{n}x</option>
                           ))}
                         </select>
+                      </div>
+                    )}
+                    {!editandoId && subcategoria === 'Parcelada' && (
+                      <div className="mt-2">
+                        <div className="text-sm text-slate-500 mb-1">{t('form.valorEhTotalOuParcela')}</div>
+                        <div className="flex gap-2">
+                          <Pill label={t('form.valorDaParcela')} active={!valorEhTotal} onClick={()=>setValorEhTotal(false)} />
+                          <Pill label={t('form.valorTotalCompra')} active={valorEhTotal} onClick={()=>setValorEhTotal(true)} />
+                        </div>
+                        {valorEhTotal && numParcelas > 0 && parseMoneyInput(valor, currency) > 0 && (
+                          <div className="text-xs text-slate-400 mt-1">
+                            {t('form.previewValorParcela', { valor: formatMoney(parseMoneyInput(valor, currency) / numParcelas, currency) })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
