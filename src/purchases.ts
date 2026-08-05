@@ -6,10 +6,7 @@
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
-// TODO: troque pela sua chave pública do RevenueCat (Project Settings → API Keys →
-// Public app-specific key para Android). É diferente da chave "secret" — essa aqui é
-// segura de deixar no código do app.
-const REVENUECAT_API_KEY_ANDROID = 'SUA_CHAVE_PUBLICA_REVENUECAT_AQUI';
+const REVENUECAT_API_KEY_ANDROID = 'goog_RjNJFuHbPbubuiBfwtmiffHHhAQ';
 
 // Precisa bater com o "Entitlement identifier" que você criar no painel do RevenueCat
 const ENTITLEMENT_SEM_ANUNCIOS = 'sem_anuncios';
