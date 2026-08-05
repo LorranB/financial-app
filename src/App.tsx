@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { AdMob, BannerAdPosition, BannerAdSize, AdmobConsentStatus } from '@capacitor-community/admob';
-import { AD_IDS, USE_TEST_ADS, deveMostrarIntersticial } from './ads';
+import { AD_IDS, TESTING_DEVICE_IDS, deveMostrarIntersticial } from './ads';
 import { temVersaoSemAnuncios, comprarSemAnuncios, restaurarCompras } from './purchases';
 import { Lang, detectLang, saveLang, translations, interpolate, LANG_LABELS, LANG_FLAGS, SUPPORTED_LANGS, catLabel } from './i18n';
 import { Currency, detectCurrency, saveCurrency, formatMoney, formatMoneyInput, parseMoneyInput, CURRENCY_INFO, SUPPORTED_CURRENCIES } from './currency';
@@ -338,7 +338,7 @@ export default function App() {
     if (!Capacitor.isNativePlatform() || verificandoCompra || isPro) return;
     (async () => {
       try {
-        await AdMob.initialize({ initializeForTesting: USE_TEST_ADS });
+        await AdMob.initialize({ initializeForTesting: true, testingDevices: TESTING_DEVICE_IDS });
 
         // Fluxo de consentimento (GDPR/UMP) — exigido pelo Google antes de mostrar
         // qualquer anúncio, mesmo fora da Europa (o SDK decide sozinho se precisa

@@ -20,11 +20,10 @@
             </intent-filter>
         </activity>
 
-        <!-- ID de teste oficial do AdMob (bate com USE_TEST_ADS=true em src/ads.ts).
-             Trocar pelo ID de produção aqui também quando USE_TEST_ADS virar false. -->
+        <!-- App ID real do AdMob (bate com PROD_IDS.appId em src/ads.ts) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"
+            android:value="ca-app-pub-5037515593513331~7352588393"
         />
 
         <provider

@@ -5,7 +5,14 @@
 // ⚠️ Troque para `false` antes de publicar de verdade na loja — só depois de já ter
 // colocado os IDs reais do seu AdMob logo abaixo. Deixar `true` em produção significa
 // que os anúncios reais nunca aparecem (só o de teste).
-export const USE_TEST_ADS = true;
+export const USE_TEST_ADS = false;
+
+// Aparelhos que sempre recebem anúncio de teste, MESMO usando os IDs reais abaixo —
+// evita que cliques do próprio desenvolvedor/testadores internos sejam contados como
+// "cliques inválidos" pelo AdMob (motivo comum de suspensão de conta). Pega esse ID no
+// logcat do Android na primeira vez que abrir o app: procure por
+// "Use RequestConfiguration.Builder().setTestDeviceIds(...)" — o ID aparece ali.
+export const TESTING_DEVICE_IDS = ['7C7F8578F00D8CC2ACAF743EE205F133'];
 
 // IDs de teste OFICIAIS do Google (documentados publicamente) — sempre mostram um
 // anúncio de exemplo, nunca geram receita real, mas também nunca arriscam banir sua
@@ -17,12 +24,10 @@ const TEST_IDS = {
   interstitial: 'ca-app-pub-3940256099942544/1033173712',
 };
 
-// TODO: depois de criar sua conta em https://admob.google.com e cadastrar o app +
-// os blocos de anúncio (banner e intersticial), cole os IDs reais aqui embaixo.
 const PROD_IDS = {
-  appId: 'SEU_APP_ID_ADMOB_AQUI',           // formato: ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
-  banner: 'SEU_ID_DE_BLOCO_BANNER_AQUI',       // formato: ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
-  interstitial: 'SEU_ID_DE_BLOCO_INTERSTICIAL_AQUI',
+  appId: 'ca-app-pub-5037515593513331~7352588393',
+  banner: 'ca-app-pub-5037515593513331/9090990137',
+  interstitial: 'ca-app-pub-5037515593513331/5159218057',
 };
 
 export const AD_IDS = USE_TEST_ADS ? TEST_IDS : PROD_IDS;
