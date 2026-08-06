@@ -193,7 +193,21 @@ export default function App() {
 
   // Menus/inputs escondidos
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement|null>(null);
   const fileImportRef = useRef<HTMLInputElement|null>(null);
+
+  // Fecha o menu hambúrguer ao clicar fora dele (mas não ao clicar no próprio botão,
+  // que já cuida de abrir/fechar sozinho via toggle no onClick)
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickFora(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onClickFora);
+    return () => document.removeEventListener('mousedown', onClickFora);
+  }, [menuOpen]);
 
   // Olho mágico: quando false, oculta TODOS os valores monetários exibidos no app
   // (não afeta os campos de edição — lá o valor real precisa continuar visível pra editar)
@@ -1020,7 +1034,7 @@ export default function App() {
                 <NavButton active={pagina==='resumo'} onClick={()=>setPagina('resumo')}>{t('nav.resumo')}</NavButton>
                 <NavButton active={pagina==='investimentos'} onClick={()=>setPagina('investimentos')}>{t('nav.investimentos')}</NavButton>
               </div>
-              <div className="relative">
+              <div className="relative" ref={menuRef}>
                 <button onClick={()=>setMenuOpen(v=>!v)} className={`p-2 rounded-xl shadow border ${darkMode ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}> <IconMenu/> </button>
                 <AnimatePresence>
                   {menuOpen && (
