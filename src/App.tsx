@@ -132,7 +132,7 @@ const IconMoon = (props:any) => (
   pill: 'bg-cyan-900 text-cyan-100 border border-cyan-800',
   accent: '#38bdf8',
 };
- const CAT_CORES = ['#06b6d4','#22d3ee','#38bdf8','#60a5fa','#93c5fd','#7dd3fc','#0ea5e9','#2563eb','#0891b2'];
+ const CAT_CORES = ['#0ea5e9','#f97316','#a855f7','#22c55e','#ec4899','#eab308','#14b8a6','#ef4444','#6366f1'];
  const CATS_PADRAO = ['Alimentação','Transporte','Moradia','Contas','Saúde','Educação','Lazer','Assinaturas','Impostos','Investimentos','Outros'];
  const CATS_INVEST = ['Renda Fixa','Ações','Fundos','ETF','Cripto','Tesouro','Caixa'];
 
@@ -1182,7 +1182,7 @@ export default function App() {
                 <div className="text-sm text-slate-500 mb-2">{t('periodo.semana')}</div>
                 <div className="flex gap-2 items-center relative">
                   <button
-                    className={`px-3 py-2 rounded-xl border w-[260px] text-left truncate flex items-center gap-2 ${darkMode ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-800 border-slate-200'}`}
+                    className={`px-3 py-2 rounded-xl border w-full text-left truncate flex items-center gap-2 ${darkMode ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-800 border-slate-200'}`}
                     onClick={()=>setShowRangePicker(v=>!v)}
                   >
                     <IconCalendar dark={darkMode}/>
@@ -1193,18 +1193,19 @@ export default function App() {
                     </span>
                   </button>
                   {showRangePicker && (
+                    <div className="fixed inset-0 z-40 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)' }} onClick={()=>setShowRangePicker(false)}>
                     <div
                       className={darkMode ? 'calendar-dark' : ''}
+                      onClick={e=>e.stopPropagation()}
                       style={{
-                        position: 'absolute',
-                        top: '110%',
-                        left: 0,
-                        zIndex: 20,
+                        zIndex: 41,
                         boxShadow: '0 4px 24px #0002',
                         background: darkMode ? '#1a2230' : '#fff',
                         borderRadius: '16px',
                         padding: '16px',
-                        minWidth: '340px'
+                        maxWidth: '95vw',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
                       }}
                     >
                       <DateRange
@@ -1254,6 +1255,7 @@ export default function App() {
                         </button>
                       </div>
                     </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1264,7 +1266,7 @@ export default function App() {
                 <div className="text-sm text-slate-500 mb-2">{t('periodo.intervalo')}</div>
                 <div className="flex gap-2 items-center relative">
                   <button
-                    className={`px-3 py-2 rounded-xl border w-[260px] text-left truncate flex items-center gap-2 ${darkMode ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-800 border-slate-200'}`}
+                    className={`px-3 py-2 rounded-xl border w-full text-left truncate flex items-center gap-2 ${darkMode ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-800 border-slate-200'}`}
                     onClick={()=>setShowRangePicker(v=>!v)}
                   >
                     <IconCalendar dark={darkMode}/>
@@ -1275,16 +1277,16 @@ export default function App() {
                     </span>
                   </button>
                   {showRangePicker && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '110%',
-                      left: 0,
-                      zIndex: 20,
+                    <div className="fixed inset-0 z-40 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)' }} onClick={()=>setShowRangePicker(false)}>
+                    <div className={darkMode ? 'calendar-dark' : ''} onClick={e=>e.stopPropagation()} style={{
+                      zIndex: 41,
                       boxShadow: '0 4px 24px #0002',
                       background: darkMode ? '#1a2230' : '#fff',
                       borderRadius: '16px',
                       padding: '16px',
-                      minWidth: '340px'
+                      maxWidth: '95vw',
+                      maxHeight: '90vh',
+                      overflowY: 'auto',
                     }}>
                       <DateRange
                         ranges={[{
@@ -1322,6 +1324,7 @@ export default function App() {
                           OK
                         </button>
                       </div>
+                    </div>
                     </div>
                   )}
                 </div>
@@ -1380,7 +1383,7 @@ export default function App() {
       return arr.sort((a, b) => parseISO(b.data).getTime() - parseISO(a.data).getTime() || b.criadoEm - a.criadoEm);
     }, [caixa, busca]);
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Remover filtros daqui, deixar só Card e tabela */}
         <Card>
           <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
@@ -1450,7 +1453,7 @@ export default function App() {
 
   function PaginaResumo(){
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <SeletorPeriodo/>
         {/* Linha suave de evolução */}
         <Card>
@@ -1460,8 +1463,20 @@ export default function App() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={serieEvolucao} margin={{ left: 10, right: 10, top: 10, bottom: 0 }}>
-                <XAxis dataKey="dia" hide={false} tickLine={false} axisLine={false}/>
-                <Tooltip formatter={(v:any)=> toBRLMask(Number(v))} labelFormatter={()=>''}/>
+                <XAxis
+                  dataKey="dia"
+                  hide={false}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11 }}
+                  interval={Math.max(0, Math.ceil(serieEvolucao.length / 6) - 1)}
+                />
+                <Tooltip
+                  formatter={(v:any)=> [toBRLMask(Number(v)), t('resumo.saldo')]}
+                  labelFormatter={()=>''}
+                  contentStyle={darkMode ? { background: '#1a2230', border: '1px solid #334155' } : undefined}
+                  itemStyle={{ color: darkMode ? '#38bdf8' : '#0369a1', fontWeight: 700 }}
+                />
                 <Line type="monotone" dataKey="saldo" stroke="#06b6d4" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }}/>
               </LineChart>
             </ResponsiveContainer>
@@ -1506,7 +1521,7 @@ export default function App() {
     },[invest]);
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <SeletorPeriodo investimentos />
         <Card>
           <div className="flex flex-wrap items-center justify-between mb-3">
@@ -1585,7 +1600,7 @@ export default function App() {
       e.target.value = ''; // permite selecionar o mesmo arquivo de novo depois
     }}
   />
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-4" style={bannerAtivo ? { paddingBottom: 80 } : undefined}>
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6" style={bannerAtivo ? { paddingBottom: 80 } : undefined}>
         {/* Seletor de período e totais */}
         {pagina === 'lancamentos' && <SeletorPeriodo/>}
         {/* Div centralizada para filtros e busca */}
