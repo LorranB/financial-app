@@ -132,8 +132,26 @@ const IconMoon = (props:any) => (
   pill: 'bg-cyan-900 text-cyan-100 border border-cyan-800',
   accent: '#38bdf8',
 };
- const CAT_CORES = ['#0ea5e9','#f97316','#a855f7','#22c55e','#ec4899','#eab308','#14b8a6','#ef4444','#6366f1'];
+ // Paleta Okabe-Ito + 2 extras do ColorBrewer (Dark2) — combinação clássica "colorblind-safe",
+ // testada pra continuar distinguível em deuteranopia/protanopia/tritanopia (não só "vermelho vs
+ // verde", que é o caso mais comum, mas as três variações).
+ const CAT_CORES = ['#E69F00','#56B4E9','#009E73','#0072B2','#D55E00','#CC79A7','#999999','#F0E442','#A6761D'];
  const CATS_PADRAO = ['Alimentação','Transporte','Moradia','Contas','Saúde','Educação','Lazer','Assinaturas','Impostos','Investimentos','Outros'];
+ // Ordem fixa das categorias conhecidas (despesa + ganho) — garante que cada uma sempre caia na
+ // mesma cor, independente de quais categorias existem no período/filtro atual sendo exibido.
+ const CATEGORIAS_ORDEM = [...CATS_PADRAO, 'Salário', 'Bônus', 'Venda'];
+
+ // Cor estável por categoria: usa a posição fixa se for uma categoria conhecida; senão (categoria
+ // digitada à mão, ou classe de investimento — texto livre) cai num hash simples, que ainda assim
+ // sempre devolve a mesma cor pro mesmo texto.
+ function corPorCategoria(nome?: string): string {
+  if (!nome) return CAT_CORES[CAT_CORES.length - 1];
+  const idxFixo = CATEGORIAS_ORDEM.indexOf(nome);
+  if (idxFixo >= 0) return CAT_CORES[idxFixo % CAT_CORES.length];
+  let hash = 0;
+  for (let i = 0; i < nome.length; i++) hash = (hash * 31 + nome.charCodeAt(i)) >>> 0;
+  return CAT_CORES[hash % CAT_CORES.length];
+ }
  const CATS_INVEST = ['Renda Fixa','Ações','Fundos','ETF','Cripto','Tesouro','Caixa'];
 
 export default function App() {
@@ -1412,7 +1430,7 @@ export default function App() {
                 )}
                 {vis.map(e=> (
                   <tr key={e.id} className="border-t">
-                    <td className="p-2 whitespace-nowrap">{fmtDM(e.data)}</td>
+                    <td className="p-2 whitespace-nowrap" style={{borderLeft: `4px solid ${corPorCategoria(e.categoria)}`}}>{fmtDM(e.data)}</td>
                     <td className="p-2">
                       {/* Tag de tipo na tabela */}
                       <span className={`px-2 py-1 rounded-full text-xs border font-bold
@@ -1491,7 +1509,7 @@ export default function App() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={donutDespesas} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3}>
-                  {donutDespesas.map((_, i)=> <Cell key={i} fill={CAT_CORES[i % CAT_CORES.length]} />)}
+                  {donutDespesas.map((d, i)=> <Cell key={i} fill={corPorCategoria(d.name)} />)}
                 </Pie>
                 <Tooltip formatter={(v:any)=> toBRLMask(Number(v))} />
               </PieChart>
@@ -1500,7 +1518,7 @@ export default function App() {
           <div className="flex flex-wrap gap-2 mt-2 text-xs">
             {donutDespesas.map((d,i)=> (
               <span key={d.name} className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                <span className="w-3 h-3 rounded-full" style={{backgroundColor: CAT_CORES[i % CAT_CORES.length]}}/>
+                <span className="w-3 h-3 rounded-full" style={{backgroundColor: corPorCategoria(d.name)}}/>
                 {d.name}: <b>{toBRLMask(d.value)}</b>
               </span>
             ))}
@@ -1543,7 +1561,7 @@ export default function App() {
                 {lista.length===0 && <tr><td colSpan={5} className="p-6 text-center text-slate-400">{t('invest.semAportes')}</td></tr>}
                 {lista.map(e=> (
                   <tr key={e.id} className="border-t">
-                    <td className="p-2 whitespace-nowrap">{fmtDM(e.ocorrenciaData)}</td>
+                    <td className="p-2 whitespace-nowrap" style={{borderLeft: `4px solid ${corPorCategoria(e.categoria)}`}}>{fmtDM(e.ocorrenciaData)}</td>
                     <td className="p-2">{nomeExibido(e)}</td>
                     <td className="p-2 hidden sm:table-cell">{e.categoria||'—'}</td>
                     <td className="p-2 text-right font-semibold text-blue-700">{toBRLMask(e.valor)}</td>
@@ -1566,7 +1584,7 @@ export default function App() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={porClasse} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3}>
-                  {porClasse.map((_, i)=> <Cell key={i} fill={CAT_CORES[i % CAT_CORES.length]} />)}
+                  {porClasse.map((d, i)=> <Cell key={i} fill={corPorCategoria(d.name)} />)}
                 </Pie>
                 <Tooltip formatter={(v:any)=> toBRLMask(Number(v))} />
               </PieChart>
