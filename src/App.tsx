@@ -1542,7 +1542,7 @@ export default function App() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={donutDespesas} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3}>
+                <Pie data={donutDespesas} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3} stroke={darkMode ? '#1a2230' : '#fff'}>
                   {donutDespesas.map((d, i)=> <Cell key={i} fill={corPorCategoria(d.name)} />)}
                 </Pie>
                 <Tooltip formatter={(v:any)=> toBRLMask(Number(v))} />
@@ -1617,7 +1617,7 @@ export default function App() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={porClasse} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3}>
+                <Pie data={porClasse} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={3} stroke={darkMode ? '#1a2230' : '#fff'}>
                   {porClasse.map((d, i)=> <Cell key={i} fill={corPorCategoria(d.name)} />)}
                 </Pie>
                 <Tooltip formatter={(v:any)=> toBRLMask(Number(v))} />
