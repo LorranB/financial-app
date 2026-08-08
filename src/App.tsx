@@ -588,14 +588,6 @@ export default function App() {
     return { ganhos, despesas, saldo: ganhos - despesas };
   },[caixa]);
 
-  // Totais "de verdade" — só o que já foi efetivamente pago/recebido (não o previsto/planejado
-  // inteiro). A diferença entre esses e `totais` é o que ainda falta pagar/receber.
-  const totaisReal = useMemo(()=>{
-    const recebido = caixa.filter(e=> e.tipo==='ganho' && e.pago).reduce((s,e)=> s+e.valor,0);
-    const pago = caixa.filter(e=> e.tipo==='despesa' && e.pago).reduce((s,e)=> s+e.valor,0);
-    return { recebido, pago, saldo: recebido - pago, aReceber: totais.ganhos - recebido, aPagar: totais.despesas - pago };
-  },[caixa, totais]);
-
   // Saldo acumulado
   const saldoAcumulado = useMemo(() => {
     const ganhos = entries.filter(e => e.tipo === 'ganho').reduce((s, e) => s + e.valor, 0);
@@ -1408,27 +1400,6 @@ export default function App() {
                   </>
                 )}
               </div>
-              {!investimentos && (
-                <>
-                  <div className={`text-sm mt-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.jaRealizado')}</div>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    <div className={`rounded-xl p-2 ${THEME.card} col-span-1`}>
-                      <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.recebido')}</div>
-                      <div className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-700'}`}>{toBRLMask(totaisReal.recebido)}</div>
-                      {totaisReal.aReceber > 0 && <div className="text-xs text-slate-400">{t('resumo.aReceber')}: {toBRLMask(totaisReal.aReceber)}</div>}
-                    </div>
-                    <div className={`rounded-xl p-2 ${THEME.card} col-span-1`}>
-                      <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.pagoTotal')}</div>
-                      <div className={`font-bold ${darkMode ? 'text-red-400' : 'text-red-700'}`}>{toBRLMask(totaisReal.pago)}</div>
-                      {totaisReal.aPagar > 0 && <div className="text-xs text-slate-400">{t('resumo.aPagar')}: {toBRLMask(totaisReal.aPagar)}</div>}
-                    </div>
-                    <div className={`rounded-xl p-2 ${darkMode ? 'bg-green-950 border border-green-900' : 'bg-green-50 border border-green-100'} col-span-1`}>
-                      <div className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-700'}`}>{t('resumo.saldoReal')}</div>
-                      <div className={`font-bold ${darkMode ? 'text-green-300' : 'text-green-800'}`}>{toBRLMask(totaisReal.saldo)}</div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </Card>
