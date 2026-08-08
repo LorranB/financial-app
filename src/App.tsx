@@ -61,7 +61,7 @@ const IconMoon = (props:any) => (
 // ---- Types ----
 // Também inclui 'investimento' mas não entra no saldo do caixa por padrão
  type Tipo = 'despesa' | 'ganho' | 'investimento';
- type Overrides = Record<string, { nome?: string; valor?: number; categoria?: string; observacoes?: string; data?: string }>;
+ type Overrides = Record<string, { nome?: string; valor?: number; categoria?: string; observacoes?: string; data?: string; pago?: boolean }>;
  type Entry = {
   id: string;
   tipo: Tipo;
@@ -76,6 +76,7 @@ const IconMoon = (props:any) => (
   ateData?: string; // Só Fixa: se definido, a série para de gerar ocorrências a partir desta data (exclusive)
   overrides?: Overrides; // Edições pontuais por data de ocorrência (yyyy-mm-dd) — usado em "editar apenas esta"
   datasExcluidas?: string[]; // Ocorrências excluídas individualmente (yyyy-mm-dd)
+  pago?: boolean; // Só lançamento não-recorrente: já foi pago (despesa) ou recebido (ganho) de verdade
  };
 
  // Uma ocorrência é uma linha exibida na tabela (uma por mês/parcela), já com overrides aplicados.
@@ -493,6 +494,7 @@ export default function App() {
                 valor: ov?.valor ?? e.valor,
                 categoria: ov?.categoria ?? e.categoria,
                 observacoes: ov?.observacoes ?? e.observacoes,
+                pago: ov?.pago ?? false,
               });
             }
           }
@@ -520,6 +522,7 @@ export default function App() {
                 valor: ov?.valor ?? e.valor,
                 categoria: ov?.categoria ?? e.categoria,
                 observacoes: ov?.observacoes ?? e.observacoes,
+                pago: ov?.pago ?? false,
               });
             }
           }
@@ -584,6 +587,14 @@ export default function App() {
     const despesas = caixa.filter(e=> e.tipo==='despesa').reduce((s,e)=> s+e.valor,0);
     return { ganhos, despesas, saldo: ganhos - despesas };
   },[caixa]);
+
+  // Totais "de verdade" — só o que já foi efetivamente pago/recebido (não o previsto/planejado
+  // inteiro). A diferença entre esses e `totais` é o que ainda falta pagar/receber.
+  const totaisReal = useMemo(()=>{
+    const recebido = caixa.filter(e=> e.tipo==='ganho' && e.pago).reduce((s,e)=> s+e.valor,0);
+    const pago = caixa.filter(e=> e.tipo==='despesa' && e.pago).reduce((s,e)=> s+e.valor,0);
+    return { recebido, pago, saldo: recebido - pago, aReceber: totais.ganhos - recebido, aPagar: totais.despesas - pago };
+  },[caixa, totais]);
 
   // Saldo acumulado
   const saldoAcumulado = useMemo(() => {
@@ -770,6 +781,21 @@ export default function App() {
     fecharModalEdicao();
   }
 
+  // Alterna "pago/recebido" de uma ocorrência. Pra Fixa/Parcelada, grava só nessa ocorrência
+  // específica (via overrides), sem afetar o resto da série — cada mês/parcela tem seu próprio status.
+  function alternarPago(oc: Ocorrencia){
+    const recorrente = oc.subcategoria === 'Fixa' || oc.subcategoria === 'Parcelada';
+    setEntries(prev => prev.map(e => {
+      if (e.id !== oc.baseId) return e;
+      if (!recorrente) return { ...e, pago: !e.pago };
+      const atual = e.overrides?.[oc.ocorrenciaData];
+      return {
+        ...e,
+        overrides: { ...(e.overrides||{}), [oc.ocorrenciaData]: { ...atual, pago: !(atual?.pago) } },
+      };
+    }));
+  }
+
   // Exclusão de lançamento — para Fixa/Parcelada, remove só a ocorrência clicada (via datasExcluidas),
   // preservando o resto da série. Para lançamento normal, remove o registro inteiro.
   function remover(oc: Ocorrencia){
@@ -860,7 +886,7 @@ export default function App() {
     return precisaAspas ? `"${escapado}"` : escapado;
   }
 
-  const CSV_COLUNAS = ['id','tipo','nome','valor','data','categoria','subcategoria','numParcelas','ateData','observacoes','overrides','datasExcluidas','criadoEm'] as const;
+  const CSV_COLUNAS = ['id','tipo','nome','valor','data','categoria','subcategoria','numParcelas','ateData','observacoes','pago','overrides','datasExcluidas','criadoEm'] as const;
 
   // CSV completo: dá pra abrir no Excel/Sheets normalmente (as colunas normais são legíveis);
   // "overrides" e "datasExcluidas" carregam JSON dentro da célula só pra permitir restaurar
@@ -871,6 +897,7 @@ export default function App() {
       switch(col){
         case 'valor': return String(e.valor).replace('.', ',');
         case 'numParcelas': return e.numParcelas != null ? String(e.numParcelas) : '';
+        case 'pago': return e.pago ? '1' : '';
         case 'overrides': return e.overrides ? JSON.stringify(e.overrides) : '';
         case 'datasExcluidas': return e.datasExcluidas?.length ? JSON.stringify(e.datasExcluidas) : '';
         case 'criadoEm': return String(e.criadoEm);
@@ -938,6 +965,7 @@ export default function App() {
         ateData: typeof item.ateData === 'string' ? item.ateData : undefined,
         overrides: item.overrides && typeof item.overrides === 'object' ? item.overrides : undefined,
         datasExcluidas: Array.isArray(item.datasExcluidas) ? item.datasExcluidas : undefined,
+        pago: typeof item.pago === 'boolean' ? item.pago : undefined,
       });
     }
     return out;
@@ -957,7 +985,7 @@ export default function App() {
     }
     const iCategoria = idx('categoria'), iSub = idx('subcategoria'), iNumParcelas = idx('numParcelas');
     const iAteData = idx('ateData'), iObs = idx('observacoes'), iOverrides = idx('overrides');
-    const iDatasExcluidas = idx('datasExcluidas'), iCriadoEm = idx('criadoEm');
+    const iDatasExcluidas = idx('datasExcluidas'), iCriadoEm = idx('criadoEm'), iPago = idx('pago');
 
     const out: Entry[] = [];
     for (let i = 1; i < linhas.length; i++) {
@@ -987,6 +1015,7 @@ export default function App() {
         observacoes: (iObs >= 0 && cols[iObs]) || undefined,
         overrides,
         datasExcluidas,
+        pago: (iPago >= 0 && cols[iPago]) ? cols[iPago] === '1' : undefined,
         criadoEm: (iCriadoEm >= 0 && cols[iCriadoEm]) ? Number(cols[iCriadoEm]) : Date.now(),
       });
     }
@@ -1379,6 +1408,27 @@ export default function App() {
                   </>
                 )}
               </div>
+              {!investimentos && (
+                <>
+                  <div className={`text-sm mt-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.jaRealizado')}</div>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    <div className={`rounded-xl p-2 ${THEME.card} col-span-1`}>
+                      <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.recebido')}</div>
+                      <div className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-700'}`}>{toBRLMask(totaisReal.recebido)}</div>
+                      {totaisReal.aReceber > 0 && <div className="text-xs text-slate-400">{t('resumo.aReceber')}: {toBRLMask(totaisReal.aReceber)}</div>}
+                    </div>
+                    <div className={`rounded-xl p-2 ${THEME.card} col-span-1`}>
+                      <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{t('resumo.pagoTotal')}</div>
+                      <div className={`font-bold ${darkMode ? 'text-red-400' : 'text-red-700'}`}>{toBRLMask(totaisReal.pago)}</div>
+                      {totaisReal.aPagar > 0 && <div className="text-xs text-slate-400">{t('resumo.aPagar')}: {toBRLMask(totaisReal.aPagar)}</div>}
+                    </div>
+                    <div className={`rounded-xl p-2 ${darkMode ? 'bg-green-950 border border-green-900' : 'bg-green-50 border border-green-100'} col-span-1`}>
+                      <div className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-700'}`}>{t('resumo.saldoReal')}</div>
+                      <div className={`font-bold ${darkMode ? 'text-green-300' : 'text-green-800'}`}>{toBRLMask(totaisReal.saldo)}</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </Card>
@@ -1415,6 +1465,7 @@ export default function App() {
             <table className="min-w-max w-full text-sm">
               <thead>
                 <tr className="text-slate-500">
+                  <th className="p-2"></th>
                   <th className="text-left p-2">{t('form.data')}</th>
                   <th className="text-left p-2">{t('form.tipo')}</th>
                   <th className="text-left p-2">{t('form.nome')}</th>
@@ -1426,11 +1477,23 @@ export default function App() {
               </thead>
               <tbody>
                 {vis.length===0 && (
-                  <tr><td colSpan={7} className="p-6 text-center text-slate-400">{t('resumo.semLancamentos')}</td></tr>
+                  <tr><td colSpan={8} className="p-6 text-center text-slate-400">{t('resumo.semLancamentos')}</td></tr>
                 )}
                 {vis.map(e=> (
                   <tr key={e.id} className="border-t">
-                    <td className="p-2 whitespace-nowrap" style={{borderLeft: `4px solid ${corPorCategoria(e.categoria)}`}}>{fmtDM(e.data)}</td>
+                    <td className="p-2" style={{borderLeft: `4px solid ${corPorCategoria(e.categoria)}`}}>
+                      <button
+                        onClick={()=>alternarPago(e)}
+                        title={e.tipo==='ganho' ? (e.pago ? t('tabela.recebido') : t('tabela.marcarRecebido')) : (e.pago ? t('tabela.pago') : t('tabela.marcarPago'))}
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0
+                          ${e.pago
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : (darkMode ? 'border-slate-600 hover:border-slate-400' : 'border-slate-300 hover:border-slate-400')}`}
+                      >
+                        {e.pago && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M2 6l3 3 5-6"/></svg>}
+                      </button>
+                    </td>
+                    <td className="p-2 whitespace-nowrap">{fmtDM(e.data)}</td>
                     <td className="p-2">
                       {/* Tag de tipo na tabela */}
                       <span className={`px-2 py-1 rounded-full text-xs border font-bold
